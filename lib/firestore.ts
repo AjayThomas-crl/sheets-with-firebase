@@ -14,6 +14,16 @@ import {
 import { db } from "./firebase";
 import type { CellData, SheetDocument } from "./types";
 
+// Single document subscription
+export function subscribeDocument(
+  docId: string,
+  onChange: (data: Partial<SheetDocument>) => void
+): Unsubscribe {
+  return onSnapshot(doc(db, "documents", docId), (snap) => {
+    if (snap.exists()) onChange(snap.data() as Partial<SheetDocument>);
+  });
+}
+
 // Documents
 
 export function subscribeDocuments(

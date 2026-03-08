@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle, Download, Loader2, XCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { subscribeCells, saveCell } from "@/lib/firestore";
+import { subscribeCells, saveCell, subscribeDocument, renameDocument } from "@/lib/firestore";
 import { upsertPresence, removePresence, subscribePresence } from "@/lib/presence";
 import { resolveAll } from "@/lib/formula";
 import type { CellData, CellFormatting, PresenceUser, WriteState } from "@/lib/types";
@@ -35,7 +35,15 @@ export function Editor({ docId }: Props) {
 
   const activePendingKey = useRef<string | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const titleDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const localCellsRef = useRef<Record<string, CellData>>({});
+
+  // ── Firestore document subscription (title) ───────────────────────────────
+  useEffect(() => {
+    return subscribeDocument(docId, (data) => {
+      if (data.title) setDocTitle(data.title);
+    });
+  }, [docId]);
 
   // ── Firestore cell subscription ───────────────────────────────────────────
   useEffect(() => {
@@ -46,6 +54,15 @@ export function Editor({ docId }: Props) {
     });
     return unsub;
   }, [docId]);
+
+  const handleTitleChange = useCallback(
+    (title: string) => {
+      setDocTitle(title);
+      if (titleDebounce.current) clearTimeout(titleDebounce.current);
+      titleDebounce.current = setTimeout(() => renameDocument(docId, title), 600);
+    },
+    [docId]
+  );
 
   // ── Presence ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -208,7 +225,7 @@ export function Editor({ docId }: Props) {
         </Link>
         <input
           value={docTitle}
-          onChange={(e) => setDocTitle(e.target.value)}
+          onChange={(e) => handleTitleChange(e.target.value)}
           className="flex-1 rounded px-2 py-0.5 text-sm font-medium text-zinc-800 outline-none hover:bg-zinc-50 focus:bg-zinc-50 focus:ring-1 focus:ring-blue-400"
         />
         <PresenceBar users={presenceUsers} />
