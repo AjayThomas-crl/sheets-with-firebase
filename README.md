@@ -2,7 +2,7 @@
 
 A lightweight, real-time collaborative spreadsheet built with **Next.js 16 App Router**, **Firebase** (Auth + Firestore), and **Tailwind CSS v4**.
 
-Live URL: _add after Vercel deployment_
+Live URL:https://vercel-sheets-with-firebase.vercel.app
 
 ---
 
